@@ -1,0 +1,149 @@
+
+import json
+import os
+import random
+
+FILE = "accounts.json"
+
+
+class BankAccount:
+
+    def __init__(self, name, pin, balance=0, account_number=None):
+        self.name = name
+        self.pin = pin
+        self.balance = balance
+        self.account_number = account_number or str(random.randint(100000, 999999))
+
+    def deposit(self, amount):
+        if amount <= 0:
+            print("Invalid deposit amount!")
+            return
+
+        self.balance += amount
+        print(f"Rs.{amount} deposited successfully.")
+
+    def withdraw(self, amount):
+        if amount <= 0:
+            print("Invalid withdrawal amount!")
+        elif amount > self.balance:
+            print("Insufficient balance!")
+        else:
+            self.balance -= amount
+            print(f"Rs.{amount} withdrawn successfully.")
+
+    def check_balance(self):
+        print(f"Available Balance: Rs.{self.balance}")
+
+
+def load_accounts():
+    if os.path.exists(FILE):
+        with open(FILE, "r") as file:
+            return json.load(file)
+    return {}
+
+
+def save_accounts(accounts):
+    with open(FILE, "w") as file:
+        json.dump(accounts, file, indent=4)
+
+
+def create_account(accounts):
+    name = input("Enter your name: ")
+    pin = input("Create 4-digit PIN: ")
+
+    if len(pin) != 4 or not pin.isdigit():
+        print("PIN must contain exactly 4 digits!")
+        return
+
+    account = BankAccount(name, pin)
+
+    accounts[account.account_number] = {
+        "name": account.name,
+        "pin": account.pin,
+        "balance": account.balance
+    }
+
+    save_accounts(accounts)
+
+    print("Account created successfully!")
+    print("Account Number:", account.account_number)
+
+
+def login(accounts):
+    acc_no = input("Enter account number: ")
+    pin = input("Enter PIN: ")
+
+    if acc_no not in accounts or accounts[acc_no]["pin"] != pin:
+        print("Invalid account number or PIN!")
+        return
+
+    data = accounts[acc_no]
+
+    account = BankAccount(
+        data["name"], data["pin"],
+        data["balance"], acc_no
+    )
+
+    while True:
+        print("\n===== BANK MENU =====")
+        print("1. Deposit")
+        print("2. Withdraw")
+        print("3. Check Balance")
+        print("4. Logout")
+
+        choice = input("Enter choice: ")
+
+        if choice == "1":
+            try:
+                amount = float(input("Enter amount: "))
+                account.deposit(amount)
+            except ValueError:
+                print("Enter a valid number!")
+
+        elif choice == "2":
+            try:
+                amount = float(input("Enter amount: "))
+                account.withdraw(amount)
+            except ValueError:
+                print("Enter a valid number!")
+
+        elif choice == "3":
+            account.check_balance()
+
+        elif choice == "4":
+            accounts[acc_no]["balance"] = account.balance
+            save_accounts(accounts)
+            print("Logged out successfully!")
+            break
+
+        else:
+            print("Invalid choice!")
+
+
+def main():
+    accounts = load_accounts()
+
+    while True:
+        print("\n===== PYTHON BANK SYSTEM =====")
+        print("1. Create Account")
+        print("2. Login")
+        print("3. Exit")
+
+        choice = input("Enter choice: ")
+
+        if choice == "1":
+            create_account(accounts)
+
+        elif choice == "2":
+            login(accounts)
+
+        elif choice == "3":
+            print("Thank you for using our bank!")
+            break
+
+        else:
+            print("Invalid choice!")
+
+
+if __name__ == "__main__":
+    main()
